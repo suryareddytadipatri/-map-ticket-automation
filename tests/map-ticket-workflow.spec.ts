@@ -14,7 +14,7 @@ async function login(page: Page) {
 
 async function claim(page: Page, id: string) {
   await page.getByLabel('Ticket ID').fill(id);
-  await page.getByRole('button', { name: 'Claim ticket' }).click();
+  await page.getByRole('button', { name: 'Claim' }).click();
 }
 
 // Steps 1 and 2 of the real work: pick case type, read policy, check resources
