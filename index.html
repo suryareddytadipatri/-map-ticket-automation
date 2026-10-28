@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Calipso Map Operations (Practice)</title>
+<style>
+:root{--bg:#eef1ee;--card:#fff;--ink:#1c2a2a;--mute:#5d6d6b;--line:#cfd8d5;--accent:#0f6b63;--road:#f2b705;--bad:#b3261e;--ok:#1b7a3a}
+@media (prefers-color-scheme:dark){:root{--bg:#141b1b;--card:#1d2626;--ink:#e6efed;--mute:#9db0ad;--line:#33423f;--accent:#4cc3b6;--bad:#ff8a80;--ok:#6fd48c}}
+*{box-sizing:border-box}[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 "Segoe UI",system-ui,sans-serif}
+.wrap{max-width:700px;margin:0 auto;padding:22px 16px}
+h1{margin:0 0 8px;font-size:23px;border-bottom:4px solid var(--road);padding-bottom:6px}
+h2{margin:0 0 8px;font-size:17px}
+.sub{color:var(--mute);margin:6px 0 12px}
+section,.card{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:14px 16px;margin-bottom:14px}
+label{display:block;margin:10px 0 4px;font-weight:600}
+.opt{display:inline-block;font-weight:400;margin:4px 14px 4px 0}
+input[type=text],input[type=password],select,textarea{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:4px;background:var(--bg);color:var(--ink);font:inherit}
+button{padding:8px 16px;border:0;border-radius:4px;background:var(--accent);color:#fff;font:inherit;cursor:pointer}
+button.alt{background:transparent;color:var(--accent);border:1px solid var(--accent)}
+button:disabled{opacity:.45;cursor:not-allowed}
+:focus-visible{outline:3px solid var(--road);outline-offset:1px}
+table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:5px 8px;border-bottom:1px solid var(--line)}
+.msg{margin-top:10px;padding:8px 10px;border-radius:4px;font-weight:600}
+.err{background:#fde7e5;color:var(--bad)}.ok{background:#e1f4e7;color:var(--ok)}
+@media (prefers-color-scheme:dark){.err{background:#3a1d1b}.ok{background:#1b3324}}
+.badge{display:inline-block;padding:1px 10px;border-radius:10px;background:var(--road);color:#1c2a2a;font-size:14px;font-weight:600}
+.bar{display:flex;justify-content:space-between;align-items:center;gap:10px}
+</style>
+</head>
+<body><div class="wrap">
+
+<div id="login-view">
+  <h1>Map Operations Login</h1>
+  <div class="card">
+    <label for="emp-id">Employee ID</label><input type="text" id="emp-id" autocomplete="off">
+    <label for="password">Password</label><input type="password" id="password" autocomplete="off">
+    <p><button id="sign-in">Sign in</button></p>
+    <div id="login-error" class="msg err" role="alert" hidden></div>
+  </div>
+  <p class="sub">Practice login: EMP1001 with Map@123. EMP9999 is a locked account.</p>
+</div>
+
+<div id="app-view" hidden>
+  <div class="bar"><h1 style="flex:1">Operator workspace</h1><button id="logout" class="alt">Log out</button></div>
+  <p id="welcome" class="sub"></p>
+
+  <section>
+    <h2>Allocated tickets</h2>
+    <p class="sub">Allocated by lead: Anita Rao</p>
+    <table id="queue"><thead><tr><th>Ticket</th><th>Country</th><th>Status</th></tr></thead><tbody></tbody></table>
+  </section>
+
+  <section>
+    <h2>Calipso: claim a ticket</h2>
+    <label for="ticket-id">Ticket ID</label>
+    <input type="text" id="ticket-id" placeholder="Paste the ticket ID here">
+    <p><button id="claim-btn">Claim ticket</button></p>
+    <div id="claim-error" class="msg err" role="alert" hidden></div>
+  </section>
+
+  <div id="work" hidden>
+    <section>
+      <h2>Ticket details</h2>
+      <p>Ticket: <strong id="t-id"></strong> | Country: <strong id="t-country"></strong> | Status: <span id="ticket-status" class="badge">Claimed</span></p>
+      <p><strong>User concern:</strong> <span id="concern"></span></p>
+    </section>
+
+    <section>
+      <h2>Step 1: Identify the case and read the policy</h2>
+      <label for="case-type">Case type</label>
+      <select id="case-type">
+        <option value="">Select case type</option>
+        <option value="highway">Highway</option><option value="address">Address</option>
+        <option value="closure">Road closure</option><option value="development">Road development</option>
+        <option value="removal">Road removal</option>
+      </select>
+      <p><button id="policy-btn" class="alt">View policy</button></p>
+      <div id="policy" hidden><h3 id="policy-title"></h3><p id="policy-text"></p></div>
+    </section>
+
+    <section>
+      <h2>Step 2: Check the resources</h2>
+      <label class="opt"><input type="checkbox" name="res"> Street view</label>
+      <label class="opt"><input type="checkbox" name="res"> Imagery</label>
+      <label class="opt"><input type="checkbox" name="res"> Official website</label>
+    </section>
+
+    <section>
+      <h2>Step 3: Decide</h2>
+      <label class="opt"><input type="radio" name="decision" value="genuine"> Concern is genuine</label>
+      <label class="opt"><input type="radio" name="decision" value="fake"> Concern is fake or not supported</label>
+      <div id="p-highway" hidden><label for="f-highway">New highway name</label><input type="text" id="f-highway"></div>
+      <div id="p-address" hidden><label for="f-address">Corrected address</label><input type="text" id="f-address"></div>
+      <div id="p-closure" hidden><label for="f-closure">Closure action</label>
+        <select id="f-closure"><option value="">Select action</option><option value="add">Add closure</option><option value="remove">Remove closure</option></select></div>
+      <div id="p-development" hidden><label for="f-development">New road name</label><input type="text" id="f-development"></div>
+      <div id="p-removal" hidden><label for="f-removal">Road to remove</label><input type="text" id="f-removal"></div>
+      <p id="keep-note" class="sub" hidden>The data will be kept as it is.</p>
+      <label for="comment">Comment</label>
+      <textarea id="comment" rows="3" placeholder="Write the reason for your decision"></textarea>
+    </section>
+
+    <section>
+      <h2>Step 4: Close the ticket</h2>
+      <button id="close-btn">Close ticket</button>
+      <div id="work-error" class="msg err" role="alert" hidden></div>
+      <div id="work-ok" class="msg ok" role="status" hidden></div>
+      <p id="result"></p><p id="saved-comment"></p>
+    </section>
+  </div>
+</div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const USERS={EMP1001:{pw:'Map@123',name:'Ravi Kumar'}};
+const LOCKED=['EMP9999'];
+const T={
+ 'TCK-1101':{c:'India',s:'Allocated',x:'House number 12A on Lake View Road should be 12B.'},
+ 'TCK-2202':{c:'United States',s:'Allocated',x:'The highway segment near Springfield is unnamed. It should be Route 66.'},
+ 'TCK-3303':{c:'United Kingdom',s:'Allocated',x:'The A40 bridge is closed for repairs but the map shows it open.'},
+ 'TCK-4404':{c:'Canada',s:'Allocated',x:'A new road, Maple Link, opened last month but is not on the map.'},
+ 'TCK-5505':{c:'Australia',s:'Allocated',x:'Old Mill Road was demolished but still appears on the map.'},
+ 'TCK-6606':{c:'India',s:'Allocated',x:'The airport road has been renamed to Rocket Street.'}
+};
+const POLICY={
+ highway:['Policy: Highway naming','Use the official route name published by the road authority. Do not rely on user photos alone.'],
+ address:['Policy: Address','Use the postal service format. Confirm the number on street view or imagery.'],
+ closure:['Policy: Road closure','Add a closure only with an official notice or fresh imagery. Remove it when the notice ends.'],
+ development:['Policy: Road development','Add a new road only when it is open to the public and visible on imagery or the official website.'],
+ removal:['Policy: Road removal','Remove a road only when imagery or an official notice confirms it no longer exists.']
+};
+const ASK={highway:['f-highway','Enter the new highway name.'],address:['f-address','Enter the corrected address.'],closure:['f-closure','Select a closure action.'],development:['f-development','Enter the new road name.'],removal:['f-removal','Enter the road to remove.']};
+let cur=null,policySeen=false;
+
+function say(id,t){const e=$(id);e.textContent=t;e.hidden=false;}
+function renderQueue(){$('queue').tBodies[0].innerHTML=Object.keys(T).map(k=>'<tr><td>'+k+'</td><td>'+T[k].c+'</td><td>'+T[k].s+'</td></tr>').join('');}
+function hideMsgs(){['claim-error','work-error','work-ok'].forEach(i=>$(i).hidden=true);$('result').textContent='';$('saved-comment').textContent='';}
+function panels(){
+ const type=$('case-type').value,d=(document.querySelector('input[name=decision]:checked')||{}).value;
+ Object.keys(ASK).forEach(k=>$('p-'+k).hidden=!(d==='genuine'&&k===type));
+ $('keep-note').hidden=d!=='fake';
+}
+function resetWork(){
+ $('work').hidden=true;cur=null;policySeen=false;$('policy').hidden=true;$('case-type').value='';
+ document.querySelectorAll('input[name=res],input[name=decision]').forEach(i=>i.checked=false);
+ ['f-highway','f-address','f-development','comment'].forEach(i=>$(i).value='');$('f-closure').value='';
+ $('close-btn').disabled=false;panels();
+}
+
+$('sign-in').onclick=()=>{
+ $('login-error').hidden=true;
+ const id=$('emp-id').value.trim().toUpperCase(),pw=$('password').value;
+ if(!id)return say('login-error','Enter your employee ID.');
+ if(!pw)return say('login-error','Enter your password.');
+ if(LOCKED.includes(id))return say('login-error','This account is locked. Contact your supervisor.');
+ const u=USERS[id];
+ if(!u||u.pw!==pw)return say('login-error','Employee ID or password is incorrect.');
+ $('welcome').textContent='Welcome, '+u.name+' ('+id+')';
+ renderQueue();$('login-view').hidden=true;$('app-view').hidden=false;
+};
+$('logout').onclick=()=>{hideMsgs();resetWork();$('ticket-id').value='';$('emp-id').value='';$('password').value='';$('app-view').hidden=true;$('login-view').hidden=false;};
+
+$('claim-btn').onclick=()=>{
+ hideMsgs();
+ const id=$('ticket-id').value.trim().toUpperCase();
+ if(!id)return say('claim-error','Enter a ticket ID.');
+ const t=T[id];
+ if(!t)return say('claim-error','Ticket '+id+' is not in your allocated list.');
+ if(t.s==='Closed')return say('claim-error','Ticket '+id+' is already closed.');
+ resetWork();cur=id;t.s='Claimed';renderQueue();
+ $('t-id').textContent=id;$('t-country').textContent=t.c;$('concern').textContent=t.x;
+ $('ticket-status').textContent='Claimed';$('work').hidden=false;
+};
+
+$('case-type').onchange=()=>{policySeen=false;$('policy').hidden=true;panels();};
+document.querySelectorAll('input[name=decision]').forEach(r=>r.onchange=panels);
+$('policy-btn').onclick=()=>{
+ $('work-error').hidden=true;
+ const type=$('case-type').value;
+ if(!type)return say('work-error','Select a case type first.');
+ $('policy-title').textContent=POLICY[type][0];$('policy-text').textContent=POLICY[type][1];
+ $('policy').hidden=false;policySeen=true;
+};
+
+$('close-btn').onclick=()=>{
+ hideMsgs();
+ const type=$('case-type').value,d=(document.querySelector('input[name=decision]:checked')||{}).value,note=$('comment').value.trim();
+ if(!type)return say('work-error','Select a case type.');
+ if(!policySeen)return say('work-error','View the policy before closing the ticket.');
+ if(!document.querySelector('input[name=res]:checked'))return say('work-error','Check at least one resource.');
+ if(!d)return say('work-error','Select a decision.');
+ let result;
+ if(d==='genuine'){
+  const v=$(ASK[type][0]).value.trim();
+  if(!v)return say('work-error',ASK[type][1]);
+  result={highway:'Highway renamed to '+v,address:'Address changed to '+v,closure:v==='add'?'Closure added':'Closure removed',development:'New road added: '+v,removal:'Road removed: '+v}[type];
+  result='Resolved: '+result;
+ }else{
+  if(!note)return say('work-error','Write a comment before closing the ticket.');
+  result='No change made. Data kept as it is.';
+ }
+ T[cur].s='Closed';renderQueue();
+ $('ticket-status').textContent='Closed';$('close-btn').disabled=true;
+ say('work-ok','Ticket '+cur+' closed');$('result').textContent=result;
+ if(note)$('saved-comment').textContent='Comment saved: '+note;
+};
+</script>
+</body>
+</html>
